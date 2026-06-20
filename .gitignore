@@ -1,0 +1,35 @@
+/[Ll]ibrary/
+/[temp]/
+/[Obj]/
+/[Build]/
+/[Builds]/
+/[Logs]/
+/[UserSettings]/
+/[memory]/
+
+# Visual Studio Type files
+.vs/
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.opendb
+*.VC.db
+
+# Android Keys & Secrets
+*.keystore
+*.jks
+*.json
+
+# Flutter specific (inside my_app)
+my_app/.dart_tool/
+my_app/.flutter-plugins
+my_app/.flutter-plugins-dependencies
+my_app/build/
