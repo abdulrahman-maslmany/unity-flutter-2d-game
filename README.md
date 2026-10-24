@@ -1,34 +1,38 @@
-# 2D Action Platformer Mobile Game (Unity & Flutter)
+# 2D Action Platformer Mobile Game (Unity & Flutter) 🎮⚔️
 
-A fully functional, production-ready 2D action-platformer mobile game developed using **Unity Engine** and integrated with **Flutter**.
-
----
-
-## 🎮 Key Gameplay Features
-
-* **Combat System:** Engage and fight enemies using both **melee attack (Sword)** and **ranged attack (Bow & Arrow / Arrow System)**.
-* **Player Movement Mechanics:** Smooth 2D physics controls supporting **Walking, Running, and Jumping**.
-* **Collectibles & Progression:** Level collection mechanics (coins/rewards) required to unlock and progress through different levels.
-* **Production Ready:** Includes fully compiled Android production bundles (`.aab`) and Flutter app wrapper integration.
+A fully functional, production-ready 2D action-platformer mobile game developed using **Unity Engine (C#)** and integrated with a **Flutter** mobile wrapper application.
 
 ---
 
-## 🛠️ Technical Architecture & Stack
+## 🌟 Key Gameplay Features
 
-* **Game Engine:** Unity (C#, ShaderLab, Physics 2D, Tilemaps)
-* **Mobile Framework:** Flutter (Dart integration via `my_app`)
-* **Target Platform:** Android (Supports ARM64 / Production AABs)
-* **Monetization & Ads:** Integrated ad network setup and policy configurations.
+* **Advanced Combat System:** Dual-combat mechanics featuring **melee attacks (Sword)** and **ranged projectile combat (Bow & Arrow System)**.
+* **Responsive 2D Platforming:** Physics-driven character controller handling acceleration, jump curves, ground detection, and obstacle collision.
+* **Collectibles & Progression:** Score tracking, currency/coin pick-ups, health containers, and dynamic level unlocking logic.
+* **Monetization & Ads Ready:** Structured AdMob integration for banner, interstitial, and rewarded ad placements.
+* **Automated Quality Pipeline:** Continuous Integration (CI) suite covering Flutter code analysis and automated regression testing.
+
+---
+
+## 🛠️ Tech Stack & Requirements
+
+| Component | Technology | Recommended Version |
+| :--- | :--- | :--- |
+| **Game Engine** | Unity Engine (C#, 2D Physics, Tilemaps) | `2022.3 LTS` or newer |
+| **Mobile App** | Flutter / Dart (`my_app`) | `Flutter 3.19+` (Dart 3.3+) |
+| **Target OS** | Android (ARM64 / ARMv7) | API Level 24+ (Android 7.0+) |
+| **CI/CD** | GitHub Actions | Automated Linting, Build & Unit Tests |
 
 ---
 
 ## 📁 Repository Structure
 
-* `/Assets`: Game graphics, player animations, enemy AI prefabs, sound effects, and level tilemaps.
-* `/my_app`: Flutter wrapper application logic and mobile UI integration.
-* `super1.aab`: Production-ready Android App Bundle artifact.
-
----
-
-## 📄 License
-This project is an original codebase developed for production and mobile application distribution.
+```text
+├── Assets/                 # Unity C# Scripts, Sprites, Tilemaps, Prefabs & Audio
+├── ProjectSettings/        # Unity project engine configurations
+├── my_app/                 # Flutter mobile shell and integration layer
+│   ├── lib/                # Flutter UI and bridge services
+│   ├── test/               # Automated unit and widget tests
+│   └── pubspec.yaml        # Flutter dependency manifest & lockfile
+├── .github/workflows/      # CI/CD pipelines (Flutter test, static analysis)
+└── .env.example            # Environment & ad configuration template
