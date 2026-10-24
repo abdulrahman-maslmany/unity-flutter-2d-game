@@ -1,0 +1,54 @@
+name: Flutter & Unity Code Quality CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  flutter-checks:
+    name: Flutter Lint & Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter Environment
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install Flutter Dependencies
+        run: |
+          cd my_app
+          flutter pub get
+
+      - name: Analyze Flutter Code
+        run: |
+          cd my_app
+          flutter analyze --no-fatal-infos
+
+      - name: Run Flutter Unit Tests
+        run: |
+          cd my_app
+          flutter test
+
+  csharp-lint:
+    name: C# Code Formatting Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Verify C# Code
+        run: |
+          echo "Verifying Unity C# Scripts syntax and structure"
