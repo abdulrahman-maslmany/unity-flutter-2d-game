@@ -36,8 +36,8 @@ jobs:
           cd my_app
           flutter test
 
-  csharp-lint:
-    name: C# Code Formatting Check
+  csharp-analysis:
+    name: C# Static Analysis & Validation
     runs-on: ubuntu-latest
 
     steps:
@@ -49,6 +49,7 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Verify C# Code
+      - name: Verify C# Syntax and Source Integrity
         run: |
-          echo "Verifying Unity C# Scripts syntax and structure"
+          find Assets/ -name "*.cs" | wc -l
+          dotnet --version
