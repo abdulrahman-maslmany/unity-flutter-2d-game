@@ -36,8 +36,8 @@ jobs:
           cd my_app
           flutter test
 
-  csharp-analysis:
-    name: C# Static Analysis & Validation
+  csharp-tests:
+    name: C# Core Engine Tests & Analysis
     runs-on: ubuntu-latest
 
     steps:
@@ -49,7 +49,8 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Verify C# Syntax and Source Integrity
-        run: |
-          find Assets/ -name "*.cs" | wc -l
-          dotnet --version
+      - name: Restore C# Test Dependencies
+        run: dotnet restore Assets/Tests/GameTests.csproj
+
+      - name: Run C# Automated Unit Tests
+        run: dotnet test Assets/Tests/GameTests.csproj --logger "console;verbosity=detailed"
