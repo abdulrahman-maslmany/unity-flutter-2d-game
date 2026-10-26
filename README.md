@@ -1,5 +1,7 @@
 # 2D Action Platformer Mobile Game (Unity & Flutter) 🎮⚔️
 
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/ca7652e526854e57917c9d09a76b72a9)](https://app.codacy.com?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+
 A fully functional, production-ready 2D action-platformer mobile game developed using **Unity Engine (C#)** and integrated with a **Flutter** mobile wrapper application.
 
 ---
@@ -29,10 +31,12 @@ A fully functional, production-ready 2D action-platformer mobile game developed 
 
 ```text
 ├── Assets/                 # Unity C# Scripts, Sprites, Tilemaps, Prefabs & Audio
+│   └── Tests/              # Automated C# NUnit engine test suite
 ├── ProjectSettings/        # Unity project engine configurations
 ├── my_app/                 # Flutter mobile shell and integration layer
 │   ├── lib/                # Flutter UI and bridge services
 │   ├── test/               # Automated unit and widget tests
 │   └── pubspec.yaml        # Flutter dependency manifest & lockfile
 ├── .github/workflows/      # CI/CD pipelines (Flutter test, static analysis)
+├── docker-compose.yml      # Isolated test runner container configuration
 └── .env.example            # Environment & ad configuration template
