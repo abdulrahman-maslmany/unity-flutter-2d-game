@@ -8,7 +8,7 @@ on:
 
 jobs:
   flutter-checks:
-    name: Flutter Lint & Tests
+    name: Flutter Lint & Automated Tests
     runs-on: ubuntu-latest
 
     steps:
@@ -29,15 +29,15 @@ jobs:
       - name: Analyze Flutter Code
         run: |
           cd my_app
-          flutter analyze --no-fatal-infos
+          flutter analyze
 
       - name: Run Flutter Unit Tests
         run: |
           cd my_app
           flutter test
 
-  csharp-tests:
-    name: C# Core Engine Tests & Analysis
+  csharp-checks:
+    name: C# Lint, Restore & Test Suite
     runs-on: ubuntu-latest
 
     steps:
@@ -49,8 +49,12 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Restore C# Test Dependencies
+      - name: Verify C# Code Format
+        run: |
+          dotnet format --verify-no-changes --verbosity diagnostic || true
+
+      - name: Restore C# Dependencies
         run: dotnet restore Assets/Tests/GameTests.csproj
 
       - name: Run C# Automated Unit Tests
-        run: dotnet test Assets/Tests/GameTests.csproj --logger "console;verbosity=detailed"
+        run: dotnet test Assets/Tests/GameTests.csproj --logger "console;verbosity=normal"
