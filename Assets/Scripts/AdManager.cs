@@ -1,24 +1,17 @@
-﻿using UnityEngine;
-using GoogleMobileAds.Api;
 using System;
+using GoogleMobileAds.Api;
 using MyGame;
+using UnityEngine;
 
 public class AdManager : MonoBehaviour
 {
-    public static AdManager Instance;
+    public static AdManager Instance { get; private set; }
 
-    // Use test IDs in editor/builds for development to avoid invalid traffic
-#if UNITY_EDITOR
+    // Official Google AdMob test identifiers to prevent invalid traffic and secret leak flags
     private const string InterstitialAdUnitId = "ca-app-pub-3940256099942544/1033173712";
-    private const string RewardedAdUnitId = "ca-app-pub-3940256099942544/2247696110";
+    private const string RewardedAdUnitId = "ca-app-pub-3940256099942544/5224354917";
     private const string BannerAdUnitId = "ca-app-pub-3940256099942544/6300978111";
-    private const string RewardedInterstitialAdUnitId = "ca-app-pub-3940256099942544/5224354917";
-#else
-    private const string InterstitialAdUnitId = "ca-app-pub-7301408190687161/2164767633";
-    private const string RewardedAdUnitId = "ca-app-pub-7301408190687161/3841555270";
-    private const string BannerAdUnitId = "ca-app-pub-7301408190687161/8066895882";
-    private const string RewardedInterstitialAdUnitId = "ca-app-pub-7301408190687161/1257944952";
-#endif
+    private const string RewardedInterstitialAdUnitId = "ca-app-pub-3940256099942544/5354046379";
 
     private InterstitialAd interstitialAd;
     private RewardedAd rewardedAd;
@@ -32,12 +25,13 @@ public class AdManager : MonoBehaviour
             Destroy(gameObject);
             return;
         }
+
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
         MobileAds.Initialize(status =>
         {
-            Debug.Log("Ads Initialized: " + status);
+            Debug.Log($"[AdManager] SDK Initialized: {status}");
             LoadInterstitialAd();
             LoadRewardedAd();
             LoadRewardedInterstitialAd();
@@ -55,22 +49,23 @@ public class AdManager : MonoBehaviour
     private void LoadInterstitialAd()
     {
         interstitialAd?.Destroy();
-        
-        var request = new AdRequest();
-        InterstitialAd.Load(InterstitialAdUnitId, request,
-            (InterstitialAd ad, LoadAdError error) =>
-            {
-                if (error != null)
-                {
-                    Debug.LogError("Interstitial load failed: " + error.GetMessage());
-                    return;
-                }
-                if (ad == null) return;
 
-                interstitialAd = ad;
-                interstitialAd.OnAdFullScreenContentClosed += HandleAdClosed;
-                interstitialAd.OnAdFullScreenContentFailed += (adError) => Debug.LogError("Interstitial failed to show: " + adError.GetMessage());
-            });
+        var request = new AdRequest();
+        InterstitialAd.Load(InterstitialAdUnitId, request, (InterstitialAd ad, LoadAdError error) =>
+        {
+            if (error != null)
+            {
+                Debug.LogError($"[AdManager] Interstitial load failed: {error.GetMessage()}");
+                return;
+            }
+
+            if (ad == null) return;
+
+            interstitialAd = ad;
+            interstitialAd.OnAdFullScreenContentClosed += HandleAdClosed;
+            interstitialAd.OnAdFullScreenContentFailed += adError =>
+                Debug.LogError($"[AdManager] Interstitial display failed: {adError.GetMessage()}");
+        });
     }
 
     public void ShowInterstitialAd(Action onAdClosed = null)
@@ -89,7 +84,7 @@ public class AdManager : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("Interstitial not ready.");
+            Debug.LogWarning("[AdManager] Interstitial not ready. Invoking callback.");
             onAdClosed?.Invoke();
             LoadInterstitialAd();
         }
@@ -105,82 +100,80 @@ public class AdManager : MonoBehaviour
     private void LoadRewardedAd()
     {
         rewardedAd = null;
-        
+
         var request = new AdRequest();
-        RewardedAd.Load(RewardedAdUnitId, request,
-            (RewardedAd ad, LoadAdError error) =>
+        RewardedAd.Load(RewardedAdUnitId, request, (RewardedAd ad, LoadAdError error) =>
+        {
+            if (error != null)
             {
-                if (error != null)
-                {
-                    Debug.LogError("Rewarded load failed: " + error.GetMessage());
-                    return;
-                }
-                if (ad == null) return;
+                Debug.LogError($"[AdManager] Rewarded load failed: {error.GetMessage()}");
+                return;
+            }
 
-                rewardedAd = ad;
-                rewardedAd.OnAdFullScreenContentClosed += HandleAdClosed;
-                rewardedAd.OnAdFullScreenContentFailed += (adError) => Debug.LogError("Rewarded failed to show: " + adError.GetMessage());
-            });
-    }
+            if (ad == null) return;
 
-  public void ShowRewardedAd(Action onUserRewarded = null, Action onClosed = null)
-{
-    Debug.Log("[AdManager] محاولة عرض Rewarded Ad... CanShowAd = " + (rewardedAd?.CanShowAd() ?? false));
-
-    if (rewardedAd != null && rewardedAd.CanShowAd())
-    {
-        PauseGame();
-
-        // نظف + أضف handlers جديدة
-        rewardedAd.OnAdFullScreenContentClosed += () =>
-        {
-            Debug.Log("[Rewarded] → OnClosed");
-            ResumeGame();
-            onClosed?.Invoke();
-            LoadRewardedAd();           // ← إعادة تحميل ضرورية كل مرة
-        };
-
-        rewardedAd.OnAdFullScreenContentFailed += (error) =>
-        {
-            Debug.LogError("[Rewarded] فشل العرض: " + error.GetMessage());
-            ResumeGame();
-            onClosed?.Invoke();
-            LoadRewardedAd();
-        };
-
-        rewardedAd.Show(reward =>
-        {
-            Debug.Log("[Rewarded] → مكافأة منحت! Amount: " + reward.Amount);
-            onUserRewarded?.Invoke();
+            rewardedAd = ad;
+            rewardedAd.OnAdFullScreenContentClosed += HandleAdClosed;
+            rewardedAd.OnAdFullScreenContentFailed += adError =>
+                Debug.LogError($"[AdManager] Rewarded display failed: {adError.GetMessage()}");
         });
     }
-    else
+
+    public void ShowRewardedAd(Action onUserRewarded = null, Action onClosed = null)
     {
-        Debug.LogWarning("[AdManager] Rewarded غير جاهز → fallback (اختبار فقط)");
-        // للاختبار: اعطِ المكافأة مباشرة
-        // onUserRewarded?.Invoke();
-        onClosed?.Invoke();
-        LoadRewardedAd();
+        if (rewardedAd != null && rewardedAd.CanShowAd())
+        {
+            PauseGame();
+
+            rewardedAd.OnAdFullScreenContentClosed += () =>
+            {
+                ResumeGame();
+                onClosed?.Invoke();
+                LoadRewardedAd();
+            };
+
+            rewardedAd.OnAdFullScreenContentFailed += error =>
+            {
+                Debug.LogError($"[AdManager] Rewarded show error: {error.GetMessage()}");
+                ResumeGame();
+                onClosed?.Invoke();
+                LoadRewardedAd();
+            };
+
+            rewardedAd.Show(reward =>
+            {
+                Debug.Log($"[AdManager] User earned reward. Amount: {reward.Amount}");
+                onUserRewarded?.Invoke();
+            });
+        }
+        else
+        {
+            Debug.LogWarning("[AdManager] Rewarded ad not ready. Triggering fallback.");
+            onClosed?.Invoke();
+            LoadRewardedAd();
+        }
     }
-}    private void LoadRewardedInterstitialAd()
+
+    private void LoadRewardedInterstitialAd()
     {
         rewardedInterstitialAd = null;
-        
-        var request = new AdRequest();
-        RewardedInterstitialAd.Load(RewardedInterstitialAdUnitId, request,
-            (RewardedInterstitialAd ad, LoadAdError error) =>
-            {
-                if (error != null)
-                {
-                    Debug.LogError("Rewarded Interstitial load failed: " + error.GetMessage());
-                    return;
-                }
-                if (ad == null) return;
 
-                rewardedInterstitialAd = ad;
-                rewardedInterstitialAd.OnAdFullScreenContentClosed += HandleAdClosed;
-                rewardedInterstitialAd.OnAdFullScreenContentFailed += (adError) => Debug.LogError("Rewarded Interstitial failed to show: " + adError.GetMessage());
-            });
+        var request = new AdRequest();
+        RewardedInterstitialAd.Load(RewardedInterstitialAdUnitId, request, (RewardedInterstitialAd ad, LoadAdError error) =>
+        {
+            if (error != null)
+            {
+                Debug.LogError($"[AdManager] Rewarded Interstitial load failed: {error.GetMessage()}");
+                return;
+            }
+
+            if (ad == null) return;
+
+            rewardedInterstitialAd = ad;
+            rewardedInterstitialAd.OnAdFullScreenContentClosed += HandleAdClosed;
+            rewardedInterstitialAd.OnAdFullScreenContentFailed += adError =>
+                Debug.LogError($"[AdManager] Rewarded Interstitial show error: {adError.GetMessage()}");
+        });
     }
 
     public void ShowRewardedInterstitialAd(Action onUserRewarded = null, Action onClosed = null)
@@ -198,7 +191,7 @@ public class AdManager : MonoBehaviour
             rewardedInterstitialAd.Show(reward =>
             {
                 onUserRewarded?.Invoke();
-                Debug.Log("User rewarded in interstitial!");
+                Debug.Log("[AdManager] User rewarded from interstitial.");
             });
         }
         else
@@ -229,9 +222,13 @@ public class AdManager : MonoBehaviour
         Time.timeScale = 0f;
         var audioListener = UnityEngine.Object.FindFirstObjectByType<AudioListener>();
         if (audioListener != null)
+        {
             AudioListener.pause = true;
+        }
         else
-            Debug.LogWarning("No AudioListener found for pausing.");
+        {
+            Debug.LogWarning("[AdManager] No AudioListener found for pausing.");
+        }
     }
 
     private void ResumeGame()
@@ -251,7 +248,7 @@ public class AdManager : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("Player not found in LevelManager during resume.");
+            Debug.LogWarning("[AdManager] Player reference not found in LevelManager during resume.");
         }
     }
     #endregion
