@@ -1,4 +1,4 @@
-name: Flutter & Unity Code Quality CI
+name: Flutter & Unity Quality CI
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   flutter-checks:
-    name: Flutter Lint & Automated Tests
+    name: Flutter Lint & Tests
     runs-on: ubuntu-latest
 
     steps:
@@ -21,7 +21,7 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Install Flutter Dependencies
+      - name: Install Dependencies
         run: |
           cd my_app
           flutter pub get
@@ -34,10 +34,10 @@ jobs:
       - name: Run Flutter Unit Tests
         run: |
           cd my_app
-          flutter test
+          flutter test --coverage
 
   csharp-checks:
-    name: C# Lint, Restore & Test Suite
+    name: C# Build & Unit Tests
     runs-on: ubuntu-latest
 
     steps:
@@ -49,12 +49,11 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Verify C# Code Format
-        run: |
-          dotnet format --verify-no-changes --verbosity diagnostic || true
-
       - name: Restore C# Dependencies
         run: dotnet restore Assets/Tests/GameTests.csproj
 
+      - name: Build C# Test Assembly
+        run: dotnet build Assets/Tests/GameTests.csproj --no-restore
+
       - name: Run C# Automated Unit Tests
-        run: dotnet test Assets/Tests/GameTests.csproj --logger "console;verbosity=normal"
+        run: dotnet test Assets/Tests/GameTests.csproj --no-build --logger "console;verbosity=normal"
