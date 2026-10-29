@@ -1,21 +1,22 @@
-using UnityEngine;
-using MyGame.Animation;
-using MyGame;
+using System;
 using GoogleMobileAds.Api;
+using MyGame;
+using MyGame.Animation;
+using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody2D))]
 public class PlayerController : MonoBehaviour
 {
-    [Header("Movement")]
+    [Header("Movement Settings")]
     [SerializeField] private float moveSpeed = 5f;
     [SerializeField] private float jumpForce = 7f;
 
-    [Header("Bow Attack")]
+    [Header("Combat & Ranged Attack")]
     [SerializeField] private GameObject arrowPrefab;
     [SerializeField] private Transform arrowSpawnPoint;
     [SerializeField] private float bowAttackCooldown = 0.5f;
 
-    [Header("Fall Detection")]
+    [Header("Hazard & Fall Bounds")]
     [SerializeField] private float fallThreshold = -10f;
 
     private Rigidbody2D rb;
@@ -23,10 +24,8 @@ public class PlayerController : MonoBehaviour
     private PlayerInputSimulation input;
     private float lastBowAttackTime;
     private Vector3 respawnPoint;
-    private bool isRespawning = false;
-    
-    // المتغير اللي هيوقف تكرار الضرر من السقوط
-    private bool hasAppliedFallDamage = false;
+    private bool isRespawning;
+    private bool hasAppliedFallDamage;
 
     public bool IsFacingRight => transform.localScale.x > 0;
 
@@ -59,86 +58,32 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-private void Update()
-{
-    // ────────────────────────────────────────────────────────
-    // DEBUG – remove or comment out later
-    // ────────────────────────────────────────────────────────
-    bool lowEnoughForWarning = transform.position.y < fallThreshold + 5f;
-    
-    if (lowEnoughForWarning || Time.frameCount % 60 == 0) // print every second + when close to threshold
+    private void Update()
     {
-        Debug.Log(
-            $"[FallDebug] Y = {transform.position.y:F2} | Threshold = {fallThreshold:F1} | " +
-            $"Respawning = {isRespawning} | Enabled = {enabled} | FallFlag = {hasAppliedFallDamage}"
-        );
+        if (!enabled || isRespawning)
+        {
+            return;
+        }
+
+        CheckFallBoundary();
+        HandleMovement();
+        HandleActions();
     }
 
-    // Original early exit
-    if (!enabled || isRespawning)
+    private void CheckFallBoundary()
     {
-        if (Time.frameCount % 120 == 0)
+        if (transform.position.y < fallThreshold && !hasAppliedFallDamage)
         {
-            Debug.LogWarning("[FallDebug] Update blocked → !enabled or isRespawning");
-        }
-        return;
-    }
+            hasAppliedFallDamage = true;
 
-    MobileDebug.Instance?.UpdateDebug(
-        $"Y: {transform.position.y:F2} | Threshold: {fallThreshold} | Already fallen: {hasAppliedFallDamage}"
-    );
-
-    // كشف السقوط
-    if (transform.position.y < fallThreshold)
-    {
-        Debug.LogWarning($"[FALL] Y = {transform.position.y:F2} → BELOW THRESHOLD! Attempting damage...");
-
-        if (!hasAppliedFallDamage)
-        {
-            Debug.LogWarning("[FALL] FIRST TIME - Applying instant death");
-            MobileDebug.Instance?.UpdateDebug("Fall detected! Applying damage ONCE...");
-
-            if (PlayerDamageable.Instance != null)
+            if (PlayerDamageable.Instance != null && PlayerDamageable.Instance.IsAlive)
             {
-                if (PlayerDamageable.Instance.IsAlive)
-                {
-                    int damage = PlayerDamageable.Instance.MaxHealth + 1;
-                    Debug.Log($"[FALL] Applying {damage} damage (maxHealth = {PlayerDamageable.Instance.MaxHealth})");
-
-                    // ──── إضافة للتصحيح ────
-                    Debug.LogWarning($"[DEBUG] Calling TakeDamage on {PlayerDamageable.Instance.gameObject.name} (instance valid)");
-
-                    PlayerDamageable.Instance.TakeDamage(damage);
-
-                    // ──── إضافة للتصحيح ────
-                    Debug.LogWarning($"[DEBUG] TakeDamage call completed");
-
-                    hasAppliedFallDamage = true;
-                    Debug.Log("[FALL] Damage applied successfully - flag set to true");
-                }
-                else
-                {
-                    Debug.Log("[FALL] Player already dead - skipping damage");
-                    hasAppliedFallDamage = true;
-                }
-            }
-            else
-            {
-                Debug.LogError("[FALL] CRITICAL: PlayerDamageable.Instance is null!");
-            }
-        }
-        else
-        {
-            if (Time.frameCount % 300 == 0)
-            {
-                Debug.Log("[FALL] Already handled - ignoring");
+                int lethalDamage = PlayerDamageable.Instance.MaxHealth + 1;
+                PlayerDamageable.Instance.TakeDamage(lethalDamage);
             }
         }
     }
 
-    HandleMovement();
-    HandleActions();
-}
     private void HandleMovement()
     {
         if (input == null) return;
@@ -150,7 +95,9 @@ private void Update()
         rb.linearVelocity = new Vector2(moveInput * moveSpeed, rb.linearVelocity.y);
 
         if (moveInput != 0)
+        {
             transform.localScale = new Vector3(moveInput > 0 ? 1 : -1, 1, 1);
+        }
 
         animator.SetBool(AnimationStrings.canMove, moveInput != 0);
         animator.SetFloat(AnimationStrings.speed, Mathf.Abs(moveInput));
@@ -213,7 +160,7 @@ private void Update()
         animator.Rebind();
         animator.Update(0f);
 
-        hasAppliedFallDamage = false; // إعادة تفعيل كشف السقوط بعد الإحياء
+        hasAppliedFallDamage = false;
     }
 
     public void ResetPlayer(Vector3 position)
@@ -243,7 +190,7 @@ private void Update()
     {
         if (rewardedAd != null && rewardedAd.CanShowAd())
         {
-            rewardedAd.Show((reward) =>
+            rewardedAd.Show(reward =>
             {
                 RespawnPlayer();
             });
