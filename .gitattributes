@@ -1,0 +1,8 @@
+# Exclude auto-generated Unity input files from code analysis & metrics
+*PlayerInputAction.cs linguist-generated=true
+*.inputactions linguist-generated=true
+
+# Mark binary artifacts
+*.aab binary
+*.apk binary
+*.unitypackage binary
