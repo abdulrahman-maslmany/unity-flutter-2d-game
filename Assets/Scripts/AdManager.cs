@@ -1,13 +1,16 @@
 using System;
 using GoogleMobileAds.Api;
 using MyGame;
+using MyGame.Utils;
 using UnityEngine;
 
 public class AdManager : MonoBehaviour
 {
+    private const string Tag = "AdManager";
+
     public static AdManager Instance { get; private set; }
 
-    // Official Google AdMob test identifiers to prevent invalid traffic and secret leak flags
+    // Official Google AdMob test identifiers
     private const string InterstitialAdUnitId = "ca-app-pub-3940256099942544/1033173712";
     private const string RewardedAdUnitId = "ca-app-pub-3940256099942544/5224354917";
     private const string BannerAdUnitId = "ca-app-pub-3940256099942544/6300978111";
@@ -31,7 +34,7 @@ public class AdManager : MonoBehaviour
 
         MobileAds.Initialize(status =>
         {
-            Debug.Log($"[AdManager] SDK Initialized: {status}");
+            GameLogger.Log(Tag, $"SDK Initialized successfully: {status}");
             LoadInterstitialAd();
             LoadRewardedAd();
             LoadRewardedInterstitialAd();
@@ -55,7 +58,7 @@ public class AdManager : MonoBehaviour
         {
             if (error != null)
             {
-                Debug.LogError($"[AdManager] Interstitial load failed: {error.GetMessage()}");
+                GameLogger.LogError(Tag, $"Interstitial load failed: {error.GetMessage()}");
                 return;
             }
 
@@ -64,7 +67,7 @@ public class AdManager : MonoBehaviour
             interstitialAd = ad;
             interstitialAd.OnAdFullScreenContentClosed += HandleAdClosed;
             interstitialAd.OnAdFullScreenContentFailed += adError =>
-                Debug.LogError($"[AdManager] Interstitial display failed: {adError.GetMessage()}");
+                GameLogger.LogError(Tag, $"Interstitial display failed: {adError.GetMessage()}");
         });
     }
 
@@ -84,7 +87,7 @@ public class AdManager : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("[AdManager] Interstitial not ready. Invoking callback.");
+            GameLogger.LogWarning(Tag, "Interstitial ad not ready. Invoking callback fallback.");
             onAdClosed?.Invoke();
             LoadInterstitialAd();
         }
@@ -106,7 +109,7 @@ public class AdManager : MonoBehaviour
         {
             if (error != null)
             {
-                Debug.LogError($"[AdManager] Rewarded load failed: {error.GetMessage()}");
+                GameLogger.LogError(Tag, $"Rewarded load failed: {error.GetMessage()}");
                 return;
             }
 
@@ -115,7 +118,7 @@ public class AdManager : MonoBehaviour
             rewardedAd = ad;
             rewardedAd.OnAdFullScreenContentClosed += HandleAdClosed;
             rewardedAd.OnAdFullScreenContentFailed += adError =>
-                Debug.LogError($"[AdManager] Rewarded display failed: {adError.GetMessage()}");
+                GameLogger.LogError(Tag, $"Rewarded display failed: {adError.GetMessage()}");
         });
     }
 
@@ -134,7 +137,7 @@ public class AdManager : MonoBehaviour
 
             rewardedAd.OnAdFullScreenContentFailed += error =>
             {
-                Debug.LogError($"[AdManager] Rewarded show error: {error.GetMessage()}");
+                GameLogger.LogError(Tag, $"Rewarded display error: {error.GetMessage()}");
                 ResumeGame();
                 onClosed?.Invoke();
                 LoadRewardedAd();
@@ -142,13 +145,13 @@ public class AdManager : MonoBehaviour
 
             rewardedAd.Show(reward =>
             {
-                Debug.Log($"[AdManager] User earned reward. Amount: {reward.Amount}");
+                GameLogger.Log(Tag, $"User earned reward. Amount: {reward.Amount}");
                 onUserRewarded?.Invoke();
             });
         }
         else
         {
-            Debug.LogWarning("[AdManager] Rewarded ad not ready. Triggering fallback.");
+            GameLogger.LogWarning(Tag, "Rewarded ad not ready. Triggering fallback.");
             onClosed?.Invoke();
             LoadRewardedAd();
         }
@@ -163,7 +166,7 @@ public class AdManager : MonoBehaviour
         {
             if (error != null)
             {
-                Debug.LogError($"[AdManager] Rewarded Interstitial load failed: {error.GetMessage()}");
+                GameLogger.LogError(Tag, $"Rewarded Interstitial load failed: {error.GetMessage()}");
                 return;
             }
 
@@ -172,7 +175,7 @@ public class AdManager : MonoBehaviour
             rewardedInterstitialAd = ad;
             rewardedInterstitialAd.OnAdFullScreenContentClosed += HandleAdClosed;
             rewardedInterstitialAd.OnAdFullScreenContentFailed += adError =>
-                Debug.LogError($"[AdManager] Rewarded Interstitial show error: {adError.GetMessage()}");
+                GameLogger.LogError(Tag, $"Rewarded Interstitial show error: {adError.GetMessage()}");
         });
     }
 
@@ -191,7 +194,7 @@ public class AdManager : MonoBehaviour
             rewardedInterstitialAd.Show(reward =>
             {
                 onUserRewarded?.Invoke();
-                Debug.Log("[AdManager] User rewarded from interstitial.");
+                GameLogger.Log(Tag, "User rewarded from interstitial.");
             });
         }
         else
@@ -227,7 +230,7 @@ public class AdManager : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("[AdManager] No AudioListener found for pausing.");
+            GameLogger.LogWarning(Tag, "No AudioListener found for pausing.");
         }
     }
 
@@ -248,7 +251,7 @@ public class AdManager : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("[AdManager] Player reference not found in LevelManager during resume.");
+            GameLogger.LogWarning(Tag, "Player reference not found in LevelManager during resume.");
         }
     }
     #endregion
