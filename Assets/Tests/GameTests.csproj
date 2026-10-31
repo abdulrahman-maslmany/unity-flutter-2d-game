@@ -9,6 +9,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- ربط كود الإنتاج الحقيقي ليتم اختباره مباشرة في الـ CI -->
+    <Compile Include="..\Scripts\Core\GameCoreRules.cs" Link="GameCoreRules.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
     <PackageReference Include="NUnit" Version="3.14.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="4.5.0" />
