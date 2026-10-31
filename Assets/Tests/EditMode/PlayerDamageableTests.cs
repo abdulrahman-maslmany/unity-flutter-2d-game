@@ -1,63 +1,48 @@
 using NUnit.Framework;
+using MyGame.Core;
 
 namespace Tests
 {
-    // اختبارات منطق نظام الضرر وصحة اللاعب
-    public class PlayerDamageableCore
-    {
-        public int Health { get; private set; }
-        public int MaxHealth { get; }
-        public bool IsAlive => Health > 0;
-
-        public PlayerDamageableCore(int maxHealth = 100)
-        {
-            MaxHealth = maxHealth;
-            Health = maxHealth;
-        }
-
-        public void TakeDamage(int damage)
-        {
-            Health = System.Math.Max(0, Health - damage);
-        }
-
-        public void Revive()
-        {
-            Health = MaxHealth;
-        }
-    }
-
     [TestFixture]
     public class PlayerDamageableTests
     {
         [Test]
-        public void TakeDamage_ReducesHealth_Accurately()
+        public void CombatRules_ApplyDamage_ReducesHealthAccurately()
         {
-            var damageable = new PlayerDamageableCore(100);
-            damageable.TakeDamage(35);
-
-            Assert.AreEqual(65, damageable.Health);
-            Assert.IsTrue(damageable.IsAlive);
+            int remaining = CombatRules.ApplyDamage(100, 35);
+            Assert.AreEqual(65, remaining);
         }
 
         [Test]
-        public void TakeDamage_ExceedingMaxHealth_ClampsAtZeroAndTriggersDeath()
+        public void CombatRules_ApplyDamage_ClampsAtZeroOnOverkill()
         {
-            var damageable = new PlayerDamageableCore(100);
-            damageable.TakeDamage(150);
-
-            Assert.AreEqual(0, damageable.Health);
-            Assert.IsFalse(damageable.IsAlive);
+            int remaining = CombatRules.ApplyDamage(50, 120);
+            Assert.AreEqual(0, remaining);
         }
 
         [Test]
-        public void Revive_RestoresHealthToMax()
+        public void CombatRules_IsLethal_CorrectlyFlagsFatalBlow()
         {
-            var damageable = new PlayerDamageableCore(100);
-            damageable.TakeDamage(100);
-            damageable.Revive();
+            Assert.IsTrue(CombatRules.IsLethal(30, 45));
+            Assert.IsFalse(CombatRules.IsLethal(100, 20));
+        }
 
-            Assert.AreEqual(100, damageable.Health);
-            Assert.IsTrue(damageable.IsAlive);
+        [TestCase(1, 3)]
+        [TestCase(2, 5)]
+        [TestCase(3, 8)]
+        [TestCase(4, 12)]
+        [TestCase(99, 15)]
+        public void LevelProgressionRules_ReturnsCorrectThreshold(int level, int expectedGems)
+        {
+            int required = LevelProgressionRules.GetRequiredGems(level);
+            Assert.AreEqual(expectedGems, required);
+        }
+
+        [Test]
+        public void LevelProgressionRules_CanUnlock_ValidatesCollectionTarget()
+        {
+            Assert.IsTrue(LevelProgressionRules.CanUnlock(5, 2));
+            Assert.IsFalse(LevelProgressionRules.CanUnlock(4, 2));
         }
     }
 }
