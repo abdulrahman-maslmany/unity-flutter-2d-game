@@ -1,35 +1,22 @@
-using System;
+<Project Sdk="Microsoft.NET.Sdk">
 
-namespace MyGame.Services
-{
-    public enum ConnectivityStatus
-    {
-        Connected,
-        Disconnected,
-        Checking
-    }
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
 
-    public interface IConnectivityService
-    {
-        ConnectivityStatus CurrentStatus { get; }
-        bool IsConnected { get; }
-        void UpdateStatus(ConnectivityStatus status);
-    }
+  <ItemGroup>
+    <Compile Include="..\Scripts\Core\GameCoreRules.cs" Link="GameCoreRules.cs" />
+    <Compile Include="..\Scripts\Services\ConnectivityService.cs" Link="ConnectivityService.cs" />
+  </ItemGroup>
 
-    public class ConnectivityService : IConnectivityService
-    {
-        public ConnectivityStatus CurrentStatus { get; private set; } = ConnectivityStatus.Connected;
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+    <PackageReference Include="NUnit" Version="3.14.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="4.5.0" />
+  </ItemGroup>
 
-        public bool IsConnected => CurrentStatus == ConnectivityStatus.Connected;
-
-        public void UpdateStatus(ConnectivityStatus status)
-        {
-            CurrentStatus = status;
-        }
-
-        public static bool EvaluateHttpStatus(long responseCode)
-        {
-            return responseCode >= 200 && responseCode < 300;
-        }
-    }
-}
+</Project>
