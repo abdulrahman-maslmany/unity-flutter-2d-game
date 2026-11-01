@@ -9,8 +9,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- ربط كود الإنتاج الحقيقي ليتم اختباره مباشرة في الـ CI -->
-    <Compile Include="..\Scripts\Core\GameCoreRules.cs" Link="GameCoreRules.cs" />
+    <!-- استخدام المسار القياسي الشامل لجميع ملفات Core و Services -->
+    <Compile Include="../Scripts/Core/**/*.cs" Link="Core/%(RecursiveDir)%(FileName)%(Extension)" />
+    <Compile Include="../Scripts/Services/**/*.cs" Link="Services/%(RecursiveDir)%(FileName)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>
