@@ -8,7 +8,7 @@ on:
 
 jobs:
   flutter-checks:
-    name: Flutter Lint & Tests
+    name: Flutter Lint, Audit & Tests
     runs-on: ubuntu-latest
 
     steps:
@@ -26,12 +26,17 @@ jobs:
           cd my_app
           flutter pub get
 
+      - name: Dependency Outdated & Security Audit
+        run: |
+          cd my_app
+          flutter pub outdated
+
       - name: Analyze Flutter Code
         run: |
           cd my_app
           flutter analyze
 
-      - name: Run Flutter Unit Tests
+      - name: Run Flutter Unit Tests with Coverage
         run: |
           cd my_app
           flutter test --coverage
