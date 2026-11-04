@@ -8,7 +8,7 @@ on:
 
 jobs:
   flutter-checks:
-    name: Flutter Lint, Audit & Tests
+    name: Flutter Lint, Typecheck & Tests
     runs-on: ubuntu-latest
 
     steps:
@@ -31,10 +31,11 @@ jobs:
           cd my_app
           flutter pub outdated
 
-      - name: Analyze Flutter Code
+      # ✅ تطبيق التوصية 07: إجبار الـ CI على الفشل إذا وُجد أي Warning أو Info
+      - name: Strict Flutter Static Analysis & Lint
         run: |
           cd my_app
-          flutter analyze
+          flutter analyze --fatal-infos --fatal-warnings
 
       - name: Run Flutter Unit Tests with Coverage
         run: |
@@ -42,7 +43,7 @@ jobs:
           flutter test --coverage
 
   csharp-checks:
-    name: C# Build & Unit Tests
+    name: C# Build, Roslyn Analyzer & Unit Tests
     runs-on: ubuntu-latest
 
     steps:
@@ -57,8 +58,14 @@ jobs:
       - name: Restore C# Dependencies
         run: dotnet restore Assets/Tests/GameTests.csproj
 
-      - name: Build C# Test Assembly
-        run: dotnet build Assets/Tests/GameTests.csproj --no-restore
+      # ✅ تطبيق التوصية 07: خطوة مستقلة لفحص Roslyn الصارم ومعاملة التحذيرات كأخطاء
+      - name: Roslyn Analyzer Check & Strict Typecheck
+        run: dotnet build Assets/Tests/GameTests.csproj --no-restore /p:TreatWarningsAsErrors=true
 
-      - name: Run C# Automated Unit Tests
-        run: dotnet test Assets/Tests/GameTests.csproj --no-build --logger "console;verbosity=normal"
+      # ✅ جمع تقرير التغطية Code Coverage لـ C#
+      - name: Run C# Automated Unit Tests with Coverage
+        run: >
+          dotnet test Assets/Tests/GameTests.csproj
+          --no-build
+          --logger "console;verbosity=normal"
+          --collect:"XPlat Code Coverage"
