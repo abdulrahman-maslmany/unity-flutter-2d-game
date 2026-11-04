@@ -1,7 +1,7 @@
 using System;
 
 namespace MyGame.Services;
-{
+
     public enum ConnectivityStatus
     {
         Connected,
