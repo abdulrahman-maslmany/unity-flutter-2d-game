@@ -3,21 +3,21 @@ using UnityEngine.SceneManagement;
 using UnityEngine.Networking;
 using UnityEngine.UI;
 using System.Collections;
+using MyGame.Core;
 
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
 
-    // دالة static لتعيين الـ Instance لمنع تحذيرات Codacy
     private static void SetInstance(GameManager instance) => Instance = instance;
 
     private Vector3 lastCheckpointPosition;
     private bool checkpointSet = false;
 
     [Header("Internet Check Settings")]
-    [SerializeField] private GameObject noInternetPanelPrefab;  // بريفاب للبانل
-    [SerializeField] private float checkInterval = 10f;         // كل كم ثانية يتحقق
-    [SerializeField] private bool requireInternetToStart = true; // هل يمنع تحميل المشهد إذا لا يوجد نت؟
+    [SerializeField] private GameObject noInternetPanelPrefab;
+    [SerializeField] private float checkInterval = 10f;
+    [SerializeField] private bool requireInternetToStart = true;
 
     private GameObject noInternetPanelInstance;
     private bool isPaused = false;
@@ -30,7 +30,7 @@ public class GameManager : MonoBehaviour
             Destroy(gameObject);
             return;
         }
-        SetInstance(this); // تم التعديل هنا لحل مشكلة static field assignment
+        SetInstance(this);
         DontDestroyOnLoad(gameObject);
     }
 
@@ -45,13 +45,12 @@ public class GameManager : MonoBehaviour
 
         if (requireInternetToStart && isPaused)
         {
-            Debug.Log("[GameManager] No internet at start. Waiting for connection...");
+            Debug.Log("[GameManager] Waiting for initial internet connection...");
         }
 
         StartCoroutine(CheckInternetLoop());
     }
 
-    // ✅ تم استبدال while(true) بشرط دورة حياة يونيتي لحل الخطأ الحرج
     private IEnumerator CheckInternetLoop()
     {
         while (enabled && Application.isPlaying)
@@ -73,16 +72,24 @@ public class GameManager : MonoBehaviour
 
             yield return request.SendWebRequest();
 
+            bool isNetworkError;
+            bool isHttpError;
+
 #if UNITY_2020_1_OR_NEWER
-            bool hasInternet = (request.result == UnityWebRequest.Result.Success);
+            isNetworkError = request.result == UnityWebRequest.Result.ConnectionError;
+            isHttpError = request.result == UnityWebRequest.Result.ProtocolError;
 #else
-            bool hasInternet = !(request.isNetworkError || request.isHttpError);
+            isNetworkError = request.isNetworkError;
+            isHttpError = request.isHttpError;
 #endif
+
+            // ✅ استخدام المنطق المعزول والمختبر عبر ConnectivityRules
+            bool hasInternet = ConnectivityRules.EvaluateConnectivity((int)request.responseCode, isNetworkError, isHttpError);
 
             if (!hasInternet)
             {
                 ShowNoInternetPanel(true);
-                if (!isPaused)
+                if (!isPaused && ConnectivityRules.ShouldPauseGame(hasInternet, requireInternetToStart))
                 {
                     Time.timeScale = 0f;
                     isPaused = true;
@@ -123,7 +130,6 @@ public class GameManager : MonoBehaviour
                 noInternetPanelInstance = Instantiate(noInternetPanelPrefab, canvas.transform);
                 noInternetPanelInstance.SetActive(true);
                 SetupRetryButton(noInternetPanelInstance);
-                Debug.Log("[GameManager] NoInternetPanel instantiated.");
             }
             else
             {
@@ -145,18 +151,12 @@ public class GameManager : MonoBehaviour
         {
             retryButton.onClick.RemoveAllListeners();
             retryButton.onClick.AddListener(ManualCheckInternet);
-            Debug.Log("[GameManager] RetryButton setup complete.");
-        }
-        else
-        {
-            Debug.LogWarning("[GameManager] RetryButton not found in NoInternetPanel. Add a Button named 'RetryButton' to the panel.");
         }
     }
 
     public void ManualCheckInternet()
     {
         StartCoroutine(CheckInternetConnection());
-        Debug.Log("[GameManager] Manual internet check initiated by user.");
     }
 
     public void EnsureUIActive()
@@ -165,9 +165,8 @@ public class GameManager : MonoBehaviour
         foreach (var canvas in canvases)
         {
             canvas.enabled = true;
-            Debug.Log("[GameManager] Canvas reactivated: " + canvas.name);
         }
-        
+
         Button[] buttons = UnityEngine.Object.FindObjectsByType<Button>(FindObjectsSortMode.None);
         foreach (var button in buttons)
         {
@@ -175,13 +174,10 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // ----------------- باقي وظائف GameManager -----------------
-
     public void SetCheckpoint(Vector3 position)
     {
         lastCheckpointPosition = position;
         checkpointSet = true;
-        Debug.Log("[GameManager] Checkpoint saved at: " + position);
     }
 
     public Vector3 LastCheckpointPosition => lastCheckpointPosition;
@@ -199,12 +195,10 @@ public class GameManager : MonoBehaviour
         if (player != null)
         {
             player.RespawnPlayer();
-            Debug.Log("[GameManager] Player respawned at checkpoint via PlayerController");
         }
         else
         {
             playerObj.transform.position = lastCheckpointPosition;
-            Debug.Log("[GameManager] Player respawned at checkpoint (fallback)");
         }
     }
 
