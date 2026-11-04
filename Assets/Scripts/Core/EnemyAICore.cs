@@ -1,7 +1,11 @@
-using UnityEngine;
+using System;
 
 namespace MyGame.Core;
 
+/// <summary>
+/// Pure AI evaluation logic for enemy detection, attack range, and cooldown math.
+/// Decoupled from Unity Engine runtime for sub-second unit testing.
+/// </summary>
 public static class EnemyAICore
 {
     public static bool IsInDetectionRange(float distance, float detectionRange)
@@ -14,16 +18,15 @@ public static class EnemyAICore
         return distance > 0f && distance <= attackRange;
     }
 
-    // ✅ الدالة الناقصة الأولى
     public static bool CanAttack(float currentTime, float lastAttackTime, float attackCooldown)
     {
         return (currentTime - lastAttackTime) >= attackCooldown;
     }
 
-    // ✅ الدالة الناقصة الثانية
     public static float CalculateFacingDirection(float directionX)
     {
-        if (Mathf.Abs(directionX) <= 0.001f)
+        // استخدام Math.Abs من مكتبة System القياسية بدلاً من Mathf الخاصة بيونيتي
+        if (Math.Abs(directionX) <= 0.001f)
         {
             return 1f;
         }
