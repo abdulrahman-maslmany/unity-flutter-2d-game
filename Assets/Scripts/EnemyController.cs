@@ -1,125 +1,139 @@
 using UnityEngine;
+using MyGame.Core;
 
-namespace MyGame
+namespace MyGame;
+
+public class EnemyController : MonoBehaviour
 {
-    public class EnemyController : MonoBehaviour
+    [Header("Movement")]
+    public float moveSpeed = 2f;
+    public float detectionRange = 5f;
+    public float attackRange = 1f;
+
+    [Header("Attack")]
+    public float attackCooldown = 1f;
+    private float lastAttackTime = 0f;
+
+    private Transform player;
+    private Animator animator;
+    private Rigidbody2D rb;
+    private EnemyAttack enemyAttack;
+    private bool hasTarget = false;
+
+    private Vector3 startPosition;
+    private Damageable damageable;
+
+    private static readonly int HasTargetHash = Animator.StringToHash("hasTarget");
+    private static readonly int IsInAttackRangeHash = Animator.StringToHash("isInAttackRange");
+    private static readonly int AttackTriggerHash = Animator.StringToHash("attackTrigger");
+    private static readonly int CanMoveHash = Animator.StringToHash("canMove");
+    private static readonly int SpeedHash = Animator.StringToHash("speed");
+
+    private void Awake()
     {
-        [Header("Movement")]
-        public float moveSpeed = 2f;
-        public float detectionRange = 5f;
-        public float attackRange = 1f;
+        animator = GetComponent<Animator>();
+        rb = GetComponent<Rigidbody2D>();
+        enemyAttack = GetComponent<EnemyAttack>();
+        damageable = GetComponent<Damageable>();
+        startPosition = transform.position;
+    }
 
-        [Header("Attack")]
-        public float attackCooldown = 1f;
-        private float lastAttackTime = 0f;
+    private void Start()
+    {
+        FindPlayer();
+    }
 
-        private Transform player;
-        private Animator animator;
-        private Rigidbody2D rb;
-        private EnemyAttack enemyAttack;
-        private bool hasTarget = false;
+    private void OnEnable()
+    {
+        ResetEnemy();
+    }
 
-        private Vector3 startPosition;
-        private Damageable damageable;
-
-        private void Awake()
+    private void FindPlayer()
+    {
+        var playerObj = UnityEngine.Object.FindFirstObjectByType<PlayerController>();
+        if (playerObj != null)
         {
-            animator = GetComponent<Animator>();
-            rb = GetComponent<Rigidbody2D>();
-            enemyAttack = GetComponent<EnemyAttack>();
-            damageable = GetComponent<Damageable>();
-            startPosition = transform.position;
+            player = playerObj.transform;
+        }
+    }
+
+    private void FixedUpdate()
+    {
+        if (player == null) 
+        { 
+            FindPlayer(); 
+            return; 
         }
 
-        private void Start()
+        float distanceToPlayer = Vector2.Distance(transform.position, player.position);
+
+        // ✅ استخدام منطق EnemyAICore الخالص والمختبر
+        hasTarget = EnemyAICore.IsInDetectionRange(distanceToPlayer, detectionRange);
+        bool isInAttackRange = EnemyAICore.IsInAttackRange(distanceToPlayer, attackRange);
+
+        animator.SetBool(HasTargetHash, hasTarget);
+        animator.SetBool(IsInAttackRangeHash, isInAttackRange);
+
+        if (hasTarget)
         {
-            FindPlayer();
-        }
-
-        private void OnEnable()
-        {
-            ResetEnemy();
-        }
-
-        private void FindPlayer()
-        {
-            // 🔥 إصلاح: استخدم FindFirstObjectByType
-            player = UnityEngine.Object.FindFirstObjectByType<PlayerController>().transform;
-            Debug.Log("[EnemyController] Player found via Singleton.");
-        }
-
-        private void FixedUpdate()
-        {
-            if (player == null) 
-            { 
-                FindPlayer(); 
-                return; 
-            }
-
-            float distanceToPlayer = Vector2.Distance(transform.position, player.position);
-            hasTarget = distanceToPlayer <= detectionRange;
-            bool isInAttackRange = distanceToPlayer <= attackRange;
-
-            animator.SetBool("hasTarget", hasTarget);
-            animator.SetBool("isInAttackRange", isInAttackRange);
-
-            if (hasTarget)
+            if (isInAttackRange)
             {
-                if (isInAttackRange)
+                StopMoving();
+                if (EnemyAICore.CanAttack(Time.time, lastAttackTime, attackCooldown))
                 {
-                    StopMoving();
-                    if (Time.time - lastAttackTime >= attackCooldown)
-                    {
-                        animator.SetTrigger("attackTrigger");
-                        lastAttackTime = Time.time;
-                    }
-                }
-                else
-                {
-                    FollowPlayer();
+                    animator.SetTrigger(AttackTriggerHash);
+                    lastAttackTime = Time.time;
                 }
             }
             else
             {
-                StopMoving();
+                FollowPlayer();
             }
         }
-
-        private void FollowPlayer()
+        else
         {
-            Vector2 direction = (player.position - transform.position).normalized;
-            rb.linearVelocity = direction * moveSpeed;
-            animator.SetBool("canMove", true);
-            animator.SetFloat("speed", direction.magnitude);
-
-            if (direction.x != 0)
-                transform.localScale = new Vector3(Mathf.Sign(direction.x), 1, 1);
+            StopMoving();
         }
+    }
 
-        private void StopMoving()
+    private void FollowPlayer()
+    {
+        Vector2 direction = (player.position - transform.position).normalized;
+        rb.linearVelocity = direction * moveSpeed;
+        animator.SetBool(CanMoveHash, true);
+        animator.SetFloat(SpeedHash, direction.magnitude);
+
+        // ✅ تجنب مقارنة الفاصلة العائمة مع الصفر لحل تحذيرات Codacy
+        if (Mathf.Abs(direction.x) > 0.001f)
         {
-            rb.linearVelocity = Vector2.zero;
-            animator.SetBool("canMove", false);
-            animator.SetFloat("speed", 0f);
+            float facing = EnemyAICore.CalculateFacingDirection(direction.x);
+            transform.localScale = new Vector3(facing, 1, 1);
         }
+    }
 
-        public void ResetEnemy()
-        {
-            damageable?.ResetHealth();
-            transform.position = startPosition;
-            rb.linearVelocity = Vector2.zero;
+    private void StopMoving()
+    {
+        rb.linearVelocity = Vector2.zero;
+        animator.SetBool(CanMoveHash, false);
+        animator.SetFloat(SpeedHash, 0f);
+    }
 
-            animator.Rebind();
-            animator.Update(0f);
+    public void ResetEnemy()
+    {
+        damageable?.ResetHealth();
+        transform.position = startPosition;
+        rb.linearVelocity = Vector2.zero;
 
-            lastAttackTime = 0f;
-            hasTarget = false;
-            animator.SetBool("hasTarget", false);
-            animator.SetBool("isInAttackRange", false);
-            animator.SetBool("canMove", false);
-            animator.SetFloat("speed", 0f);
+        animator.Rebind();
+        animator.Update(0f);
 
-            gameObject.SetActive(true);
-        }
+        lastAttackTime = 0f;
+        hasTarget = false;
+        animator.SetBool(HasTargetHash, false);
+        animator.SetBool(IsInAttackRangeHash, false);
+        animator.SetBool(CanMoveHash, false);
+        animator.SetFloat(SpeedHash, 0f);
+
+        gameObject.SetActive(true);
     }
 }
