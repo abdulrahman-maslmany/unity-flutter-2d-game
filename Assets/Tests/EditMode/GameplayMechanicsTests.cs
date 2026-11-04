@@ -1,7 +1,6 @@
 using NUnit.Framework;
 
-namespace Tests
-{
+namespace Tests;
     // اختبارات منطق اللعبة الحقيقية (Combat & Core Engine Rules)
     [TestFixture]
     public class GameplayMechanicsTests
@@ -39,4 +38,4 @@ namespace Tests
             Assert.IsTrue(bannerId.Contains("/"));
         }
     }
-}
+
