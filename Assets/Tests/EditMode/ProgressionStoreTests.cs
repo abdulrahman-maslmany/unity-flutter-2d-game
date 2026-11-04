@@ -1,8 +1,7 @@
 using NUnit.Framework;
 using MyGame.Services;
 
-namespace Tests
-{
+namespace Tests;
     [TestFixture]
     public class ProgressionStoreTests
     {
@@ -44,4 +43,4 @@ namespace Tests
             Assert.AreEqual(1200, _progression.GetHighScore());
         }
     }
-}
+
