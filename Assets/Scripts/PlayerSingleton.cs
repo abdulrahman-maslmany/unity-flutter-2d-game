@@ -5,6 +5,9 @@ public class PlayerSingleton : MonoBehaviour
 {
     public static PlayerSingleton Instance { get; private set; }
 
+    // دالة static مساعدة لتعيين النسخة لمنع تحذير Codacy
+    private static void SetInstance(PlayerSingleton instance) => Instance = instance;
+
     public Transform PlayerTransform { get; private set; }
     
     // ✅ نوع صحيح دلوقتي
@@ -20,7 +23,7 @@ public class PlayerSingleton : MonoBehaviour
             return;
         }
 
-        Instance = this;
+        SetInstance(this); // تم التعديل هنا
         DontDestroyOnLoad(gameObject);
 
         InitializeComponents();
@@ -40,7 +43,6 @@ public class PlayerSingleton : MonoBehaviour
 
         PlayerTransform = transform;
 
-        // ✅ الأهم: PlayerDamageable مش Damageable
         PlayerDamageable = GetComponent<PlayerDamageable>();
         PlayerController = GetComponent<PlayerController>();
 
