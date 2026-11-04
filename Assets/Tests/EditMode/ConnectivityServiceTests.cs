@@ -1,8 +1,7 @@
 using NUnit.Framework;
 using MyGame.Services;
 
-namespace Tests
-{
+namespace Tests;
     [TestFixture]
     public class ConnectivityServiceTests
     {
@@ -34,4 +33,4 @@ namespace Tests
             Assert.AreEqual(expected, isSuccess);
         }
     }
-}
+
