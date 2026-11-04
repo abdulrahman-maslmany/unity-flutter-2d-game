@@ -1,7 +1,6 @@
 using NUnit.Framework;
 
-namespace Tests
-{
+namespace Tests;
     // اختبارات منطق فتح المستويات وحساب الجواهر
     public class LevelProgressionCore
     {
@@ -40,4 +39,4 @@ namespace Tests
             Assert.IsFalse(LevelProgressionCore.CanUnlockNextLevel(4, 2));
         }
     }
-}
+
