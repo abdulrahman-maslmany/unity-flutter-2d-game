@@ -94,12 +94,15 @@ public class PlayerController : MonoBehaviour
 
         rb.linearVelocity = new Vector2(moveInput * moveSpeed, rb.linearVelocity.y);
 
-        if (moveInput != 0)
+        // ✅ إصلاح خطأ Codacy: فحص المدى العشري بدلاً من != 0
+        bool isMoving = Mathf.Abs(moveInput) > 0.001f;
+
+        if (isMoving)
         {
             transform.localScale = new Vector3(moveInput > 0 ? 1 : -1, 1, 1);
         }
 
-        animator.SetBool(AnimationStrings.canMove, moveInput != 0);
+        animator.SetBool(AnimationStrings.canMove, isMoving);
         animator.SetFloat(AnimationStrings.speed, Mathf.Abs(moveInput));
     }
 
@@ -204,8 +207,8 @@ public class PlayerController : MonoBehaviour
     public void SetMoveDirection(float direction)
     {
         if (input == null) return;
-        input.MoveLeft = direction < 0;
-        input.MoveRight = direction > 0;
+        input.MoveLeft = direction < -0.001f;
+        input.MoveRight = direction > 0.001f;
     }
 
     public void Jump()
