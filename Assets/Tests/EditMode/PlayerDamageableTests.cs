@@ -1,8 +1,7 @@
 using NUnit.Framework;
 using MyGame.Core;
 
-namespace Tests
-{
+namespace Tests;
     [TestFixture]
     public class PlayerDamageableTests
     {
@@ -45,4 +44,4 @@ namespace Tests
             Assert.IsFalse(LevelProgressionRules.CanUnlock(4, 2));
         }
     }
-}
+
