@@ -1,6 +1,6 @@
 using System;
 
-namespace MyGame.Services
+namespace MyGame.Services;
 {
     public enum ConnectivityStatus
     {
@@ -32,4 +32,4 @@ namespace MyGame.Services
             return responseCode >= 200 && responseCode < 300;
         }
     }
-}
+
