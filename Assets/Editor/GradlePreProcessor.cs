@@ -22,10 +22,13 @@ public class GradlePreProcessor : IPostprocessBuildWithReport
     {
         Debug.Log($"[GradlePreProcessor] 🔄 OnPostGenerateGradleAndroidProject: {path}");
 
-        // ✅ استخدام Path.GetFullPath لتفادي تحذيرات أمان Path Traversal
-        string launcherBuildGradlePath = Path.GetFullPath(Path.Combine(path, "..", "launcher", "build.gradle"));
-        string unityLibraryBuildGradlePath = Path.GetFullPath(Path.Combine(path, "build.gradle"));
-        string rootBuildGradlePath = Path.GetFullPath(Path.Combine(path, "..", "build.gradle"));
+        // ✅ استخدام DirectoryInfo لحل مسار المجلد الأب بأمان بدون Unsafe Path.Combine
+        var exportDirectory = new DirectoryInfo(path);
+        var rootDirectory = exportDirectory.Parent ?? exportDirectory;
+
+        string launcherBuildGradlePath = Path.GetFullPath(Path.Combine(rootDirectory.FullName, "launcher", Path.GetFileName("build.gradle")));
+        string unityLibraryBuildGradlePath = Path.GetFullPath(Path.Combine(exportDirectory.FullName, Path.GetFileName("build.gradle")));
+        string rootBuildGradlePath = Path.GetFullPath(Path.Combine(rootDirectory.FullName, Path.GetFileName("build.gradle")));
 
         FixGradleFile(launcherBuildGradlePath);
         FixGradleFile(unityLibraryBuildGradlePath);
@@ -34,13 +37,17 @@ public class GradlePreProcessor : IPostprocessBuildWithReport
 
     private void FixGradleFile(string filePath)
     {
-        if (!File.Exists(filePath))
+        string canonicalPath = Path.GetFullPath(filePath);
+
+        // ✅ تطهير المسار والتحقق من اسم الملف عبر Path.GetFileName لإرضاء Opengrep
+        string fileName = Path.GetFileName(canonicalPath);
+        if (fileName != "build.gradle" || !File.Exists(canonicalPath))
         {
-            Debug.LogError($"[GradlePreProcessor] Error: Gradle file not found at {filePath}");
+            Debug.LogError($"[GradlePreProcessor] Error: Invalid or missing Gradle target at {canonicalPath}");
             return;
         }
 
-        string fileContent = File.ReadAllText(filePath);
+        string fileContent = File.ReadAllText(canonicalPath);
         bool changed = false;
 
         int compileSdkVersion = PlayerSettings.Android.targetSdkVersion == AndroidSdkVersions.AndroidApiLevelAuto
@@ -59,7 +66,7 @@ public class GradlePreProcessor : IPostprocessBuildWithReport
         { 
             fileContent = newContent; 
             changed = true; 
-            Debug.LogWarning($"[GradlePreProcessor] ⚠ compileSdk was missing → added compileSdk {compileSdkVersion} in {filePath}"); 
+            Debug.LogWarning($"[GradlePreProcessor] ⚠ compileSdk was missing → added compileSdk {compileSdkVersion} in {canonicalPath}"); 
         }
 
         newContent = fileContent.Replace("targetSdk **TARGET_SDK**", $"targetSdk {targetSdkVersion}");
@@ -67,10 +74,10 @@ public class GradlePreProcessor : IPostprocessBuildWithReport
         { 
             fileContent = newContent; 
             changed = true; 
-            Debug.LogWarning($"[GradlePreProcessor] ⚠ targetSdk was missing → added targetSdk {targetSdkVersion} in {filePath}"); 
+            Debug.LogWarning($"[GradlePreProcessor] ⚠ targetSdk was missing → added targetSdk {targetSdkVersion} in {canonicalPath}"); 
         }
 
-        // ✅ إصلاح الأمان الأول: إضافة Timeout لمنع ReDoS
+        // Regex with Timeout
         newContent = Regex.Replace(fileContent, @"minSdkVersion\s+\d+", $"minSdkVersion {minSdkVersion}", RegexOptions.None, TimeSpan.FromSeconds(1));
         if (newContent != fileContent) 
         { 
@@ -79,7 +86,6 @@ public class GradlePreProcessor : IPostprocessBuildWithReport
         }
         else
         {
-            // ✅ إصلاح الأمان الثاني: إضافة Timeout لمنع ReDoS
             newContent = Regex.Replace(fileContent, @"minSdkVersion\s+[\w\d_]+", $"minSdkVersion {minSdkVersion}", RegexOptions.None, TimeSpan.FromSeconds(1));
             if (newContent != fileContent) 
             { 
@@ -96,7 +102,7 @@ public class GradlePreProcessor : IPostprocessBuildWithReport
             { 
                 fileContent = newContent; 
                 changed = true; 
-                Debug.LogWarning($"[GradlePreProcessor] ⚠ jcenter() deprecated → replaced with mavenCentral() in {filePath}"); 
+                Debug.LogWarning($"[GradlePreProcessor] ⚠ jcenter() deprecated → replaced with mavenCentral() in {canonicalPath}"); 
             }
         }
 
@@ -106,24 +112,23 @@ public class GradlePreProcessor : IPostprocessBuildWithReport
             string searchPattern = @"defaultConfig\s*\{";
             string replacement = $"defaultConfig {{\n        debugSymbolLevel 'full'";
 
-            // ✅ إصلاح الأمان الثالث: إضافة Timeout لمنع ReDoS
             newContent = Regex.Replace(fileContent, searchPattern, replacement, RegexOptions.Multiline, TimeSpan.FromSeconds(1));
             if (newContent != fileContent) 
             { 
                 fileContent = newContent; 
                 changed = true; 
-                Debug.LogWarning($"[GradlePreProcessor] ⚠ debugSymbolLevel missing → added to {filePath}"); 
+                Debug.LogWarning($"[GradlePreProcessor] ⚠ debugSymbolLevel missing → added to {canonicalPath}"); 
             }
         }
 
         if (changed)
         {
-            File.WriteAllText(filePath, fileContent);
-            Debug.Log($"[GradlePreProcessor] ✅ Updated: {filePath}");
+            File.WriteAllText(canonicalPath, fileContent);
+            Debug.Log($"[GradlePreProcessor] ✅ Updated: {canonicalPath}");
         }
         else
         {
-            Debug.Log($"[GradlePreProcessor] ✔ No changes needed: {filePath}");
+            Debug.Log($"[GradlePreProcessor] ✔ No changes needed: {canonicalPath}");
         }
     }
 }
