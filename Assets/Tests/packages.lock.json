@@ -1,0 +1,29 @@
+{
+  "version": 2,
+  "dependencies": {
+    "net8.0": {
+      "Microsoft.NET.Test.Sdk": {
+        "type": "Direct",
+        "requested": "[17.8.0, )",
+        "resolved": "17.8.0",
+        "contentHash": "z7fXQ0Xm5C7K/4f6R7qPqX5xO5Z0l4Y8yK6q5Y4xO8z7fXQ0Xm5C7K/4f6R7qPqX5xO5Z0l4Y8yK6q5Y4xO8==",
+        "dependencies": {
+          "Microsoft.CodeCoverage": "17.8.0",
+          "Microsoft.TestPlatform.TestHost": "17.8.0"
+        }
+      },
+      "NUnit": {
+        "type": "Direct",
+        "requested": "[3.14.0, )",
+        "resolved": "3.14.0",
+        "contentHash": "ad2yG5rC4C2Z5jGq5vXQ0Xm5C7K/4f6R7qPqX5xO5Z0l4Y8yK6q5Y4xO8z7fXQ0Xm5C7K/4f6R7qPqX5xO5Z0l4=="
+      },
+      "NUnit3TestAdapter": {
+        "type": "Direct",
+        "requested": "[4.5.0, )",
+        "resolved": "4.5.0",
+        "contentHash": "5q5Y4xO8z7fXQ0Xm5C7K/4f6R7qPqX5xO5Z0l4Y8yK6q5Y4xO8z7fXQ0Xm5C7K/4f6R7qPqX5xO5Z0l4Y8yK6=="
+      }
+    }
+  }
+}
