@@ -1,5 +1,5 @@
 using NUnit.Framework;
-using MyGame.Utils;
+using MyGame.Core;
 
 namespace Tests;
 
