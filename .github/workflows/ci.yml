@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ main ]
 
+# ✅ منح الـ CI صلاحية الكتابة لرفع ملف packages.lock.json الأصلي
+permissions:
+  contents: write
+
 jobs:
   flutter-checks:
     name: Flutter Lint, Typecheck & Tests
@@ -15,8 +19,9 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      # ✅ تثبيت الـ Commit SHA لمنع تحذيرات Codacy الأمنية
       - name: Setup Flutter Environment
-        uses: subosito/flutter-action@v2
+        uses: subosito/flutter-action@f2c4f6686ca8e8d6e6d0f28410eeef506ed66aff # v2.18.0
         with:
           channel: 'stable'
           cache: true
@@ -31,7 +36,6 @@ jobs:
           cd my_app
           flutter pub outdated
 
-      # ✅ تطبيق التوصية 07: إجبار الـ CI على الفشل إذا وُجد أي Warning أو Info
       - name: Strict Flutter Static Analysis & Lint
         run: |
           cd my_app
@@ -55,14 +59,20 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Restore C# Dependencies
-        run: dotnet restore Assets/Tests/GameTests.csproj
+      # ✅ حذف الملف القديم وتوليد الـ packages.lock.json الأصلي المشفر تلقائياً
+      - name: Generate Authentic packages.lock.json
+        run: |
+          rm -f Assets/Tests/packages.lock.json
+          dotnet restore Assets/Tests/GameTests.csproj --use-lock-file
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Assets/Tests/packages.lock.json
+          git commit -m "build(dotnet): commit authentic packages.lock.json from CI runner" || echo "No lockfile changes"
+          git push origin main || echo "Push skipped or branch protected"
 
-      # ✅ تطبيق التوصية 07: خطوة مستقلة لفحص Roslyn الصارم ومعاملة التحذيرات كأخطاء
       - name: Roslyn Analyzer Check & Strict Typecheck
         run: dotnet build Assets/Tests/GameTests.csproj --no-restore /p:TreatWarningsAsErrors=true
 
-      # ✅ جمع تقرير التغطية Code Coverage لـ C#
       - name: Run C# Automated Unit Tests with Coverage
         run: >
           dotnet test Assets/Tests/GameTests.csproj
