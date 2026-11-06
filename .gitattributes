@@ -1,5 +1,6 @@
 # Exclude auto-generated Unity input files from code analysis & metrics
-*PlayerInputAction.cs linguist-generated=true
+Assets/Art/Characters/Player/PlayerInputAction.cs linguist-generated=true
+**/PlayerInputAction.cs linguist-generated=true
 *.inputactions linguist-generated=true
 
 # Mark binary artifacts
