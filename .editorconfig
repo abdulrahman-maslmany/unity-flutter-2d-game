@@ -23,3 +23,7 @@ dotnet_style_qualification_for_method = false:suggestion
 # Dart & YAML files
 [*.{dart,yaml,yml}]
 indent_size = 2
+
+# Exclude auto-generated Unity Input System files from Roslyn & Linter debt metrics
+[**/PlayerInputAction.cs]
+generated_code = true
