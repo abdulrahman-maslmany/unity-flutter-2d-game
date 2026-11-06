@@ -6,9 +6,9 @@ on:
   pull_request:
     branches: [ main ]
 
-# ✅ منح الـ CI صلاحية الكتابة لرفع ملف packages.lock.json الأصلي
+# ✅ فرض مبدأ الصلاحيات الأدنى (Least Privilege) لضمان الأمان
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   flutter-checks:
@@ -31,7 +31,7 @@ jobs:
           cd my_app
           flutter pub get
 
-      - name: Dependency Outdated & Security Audit
+      - name: Dependency Outdated & Hygiene Check
         run: |
           cd my_app
           flutter pub outdated
@@ -59,16 +59,9 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      # ✅ حذف الملف القديم وتوليد الـ packages.lock.json الأصلي المشفر تلقائياً
-      - name: Generate Authentic packages.lock.json
-        run: |
-          rm -f Assets/Tests/packages.lock.json
-          dotnet restore Assets/Tests/GameTests.csproj --use-lock-file
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -f Assets/Tests/packages.lock.json
-          git commit -m "build(dotnet): commit authentic packages.lock.json from CI runner" || echo "No lockfile changes"
-          git push origin main || echo "Push skipped or branch protected"
+      # ✅ استعادة الحزم عبر الوضع المقفل لضمان بنية مستقرة وقابلة للتكرار 100%
+      - name: Restore C# Dependencies (Locked Mode)
+        run: dotnet restore Assets/Tests/GameTests.csproj --locked-mode
 
       - name: Roslyn Analyzer Check & Strict Typecheck
         run: dotnet build Assets/Tests/GameTests.csproj --no-restore /p:TreatWarningsAsErrors=true
