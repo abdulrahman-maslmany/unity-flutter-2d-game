@@ -1,9 +1,10 @@
-version: '3.8'
-
 services:
-  flutter-runner:
-    image: ghcr.io/cirruslabs/flutter:latest
-    working_dir: /app/my_app
+  test-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile
     volumes:
       - .:/app
-    command: sh -c "flutter pub get && flutter test"
+    environment:
+      - CI=true
+    command: sh -c "dotnet test Assets/Tests/GameTests.csproj && cd my_app && flutter test"
