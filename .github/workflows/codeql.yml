@@ -1,4 +1,4 @@
-name: "CodeQL Advanced Security Analysis"
+﻿name: "CodeQL Advanced Security Analysis"
 
 on:
   push:
@@ -21,10 +21,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
-          languages: javascript, typescript # (أو csharp لمشروع Unity)
+          languages: csharp
+          build-mode: autobuild
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
