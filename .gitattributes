@@ -7,3 +7,8 @@ Assets/Art/Characters/Player/PlayerInputAction.cs linguist-generated=true
 *.aab binary
 *.apk binary
 *.unitypackage binary
+# Exclude Unity meta files and lockfiles from statistics
+*.meta -text -diff
+*.lock linguist-generated=true
+packages.lock.json linguist-generated=true
+pubspec.lock linguist-generated=true
